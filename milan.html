@@ -93,7 +93,6 @@
       const uniforms = {
         iTime: { value: 0 },
         iResolution: { value: new THREE.Vector3(1, 1, 1) },
-        iChannel0: { value: texture },
       };
 
       const materiale = new THREE.ShaderMaterial({
@@ -101,7 +100,7 @@
         fragmentShader,
         uniforms,
       });
-      
+
       function makeInstance(geometry, x) {
         const sphere = new THREE.Mesh(geometry, materiale);
         scene.add(sphere);
