@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Challenge 2 - Milan</title>
+		<style>
+			body { margin: 0;}
+			#c {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+		</style>
+	</head>
+	<body>
+    <canvas id="c"></canvas>
+		<script type="module">
+
+      import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r119/build/three.module.js';
+
+    function main() {
+      const canvas = document.querySelector('#c');
+      const renderer = new THREE.WebGLRenderer({ canvas });
+
+      const fov = 75;
+      const aspect = 2;  // the canvas default
+      const near = 0.1;
+      const far = 5;
+      const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+      camera.position.z = 2;
+
+      const scene = new THREE.Scene();
+      const boxWidth = 1;
+      const boxHeight = 1;
+      const boxDepth = 1;
+      const geometry = new THREE.SphereGeometry( 2, 32, 32, 0, Math.PI*2, 0, Math.PI );
+      const material = new THREE.MeshBasicMaterial( {color: 0x92e864} );
+      const sphere = new THREE.Mesh( geometry, material );
+      //const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+      const fragmentShader = `
+      precision mediump float;
+
+          uniform sampler2D iChannel0;
+
+          uniform vec3 iResolution;           // viewport resolution (in pixels)
+          uniform float iTime;                 // shader playback time (in seconds)
+          uniform vec4 iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: clic
+
+          vec2 center = vec2(0.5, 0.5);
+          float speed = 0.035;
+
+          varying vec2 uv;
+
+          void mainImage (out vec4 fragColor, in vec2 fragCoord)
+          {
+            float invAr = iResolution.y / iResolution.x;
+
+            vec2 uv = fragCoord.xy/iResolution.xy;
+
+            vec3 col = vec4(uv, 0.5+0.5*sin(iTime),1.0).xyz;
+
+            vec3 texcol;
+
+            float x = (center.x-uv.x);
+            float y= 1.0+0.5*sin((r+iTime*speed)/0.013);
+
+            texcol.x = z;
+            texcol.y = z;
+            texcol.z = z;
+
+            fragColor = vec4(col*texcol, 1.0);
+          }
+
+          void main() {
+            mainImage(gl_FragColor, gl_FragCoord.xy);
+          }`;
+
+          const vertexShader = `
+            precision mediump float;
+
+            attribute vec2 a_position;
+            attribute vec2 a_texCoord;
+
+            varying vec2 uv;
+
+              void main() {
+              gl_Position = vec4(a_position, 1, 1);
+              uv = a_texCoord;
+          }`;
+
+
+      const uniforms = {
+        iTime: { value: 0 },
+        iResolution: { value: new THREE.Vector3(1, 1, 1) },
+        iChannel0: { value: texture },
+      };
+
+      const materiale = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms,
+      });
+      
+      function makeInstance(geometry, x) {
+        const sphere = new THREE.Mesh(geometry, materiale);
+        scene.add(sphere);
+
+        sphere.position.x = x;
+
+        return sphere;
+      }
+
+      const spheres = [
+        makeInstance(geometry, 0),
+        makeInstance(geometry, -2),
+        makeInstance(geometry, 2),
+      ];
+
+      function resizeRendererToDisplaySize(renderer) {
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+      }
+
+      function render(time) {
+        time *= 0.001;  // convert to seconds
+
+        if (resizeRendererToDisplaySize(renderer)) {
+          const canvas = renderer.domElement;
+          camera.aspect = canvas.clientWidth / canvas.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+
+        spheres.forEach((sphere, ndx) => {
+          const speed = 1 + ndx * .1;
+          const rot = time * speed;
+          sphere.rotation.x = rot;
+          sphere.rotation.y = rot;
+        });
+
+        uniforms.iTime.value = time;
+
+        renderer.render(scene, camera);
+
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    main();
+
+		</script>
+	</body>
+</html>
+
